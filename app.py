@@ -30,7 +30,7 @@ def login_screen():
     if st.sidebar.button("Login"):
         st.session_state['player_id'] = player_id
         st.session_state['screen'] = 'main_menu'
-        st.experimental_rerun()
+        st.experimental_rerun()  # Rerun the script after updating session state
 
 # Main menu screen
 def main_menu_screen():
