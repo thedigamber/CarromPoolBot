@@ -1,87 +1,74 @@
 import streamlit as st
-import ui_elements
-import backend
-import game_engine
-import websocket_handler
+import json
+import os
 
 # Initialize session state
 if 'player_id' not in st.session_state:
     st.session_state['player_id'] = None
-if 'game_state' not in st.session_state:
-    st.session_state['game_state'] = None
-if 'screen' not in st.session_state:
-    st.session_state['screen'] = 'login'
+if 'player_data' not in st.session_state:
+    st.session_state['player_data'] = {}
 
-# Function to handle routing
-def route():
-    if st.session_state['screen'] == 'login':
-        login_screen()
-    elif st.session_state['screen'] == 'main_menu':
-        main_menu_screen()
-    elif st.session_state['screen'] == 'game':
-        game_screen()
-    elif st.session_state['screen'] == 'chat':
-        chat_screen()
+# Load player data from JSON file
+def load_player_data():
+    if os.path.exists('player_data.json'):
+        with open('player_data.json', 'r') as f:
+            st.session_state['player_data'] = json.load(f)
+    else:
+        st.session_state['player_data'] = {}
 
-# Login screen
-def login_screen():
-    st.sidebar.title("Carrom Pool Controller")
-    player_id = st.sidebar.text_input("Enter Player ID", value=st.session_state['player_id'])
-    if st.sidebar.button("Login"):
-        st.session_state['player_id'] = player_id
-        st.session_state['screen'] = 'main_menu'
-        st.rerun()  # Rerun the script after updating session state
+# Save player data to JSON file
+def save_player_data():
+    with open('player_data.json', 'w') as f:
+        json.dump(st.session_state['player_data'], f)
 
-# Main menu screen
-def main_menu_screen():
-    st.title("Carrom Pool Game Controller")
-    if st.sidebar.button("Start Game"):
-        start_game()
-    if st.sidebar.button("Join Game"):
-        join_game()
-    if st.sidebar.button("Chat"):
-        go_to_chat()
-    if st.session_state['player_id']:
-        st.sidebar.write(f"Logged in as: {st.session_state['player_id']}")
-    # Display player info
-    player_info = backend.get_player_info(st.session_state['player_id'])
-    st.write(player_info)
+# Function to handle login
+def login(player_id):
+    st.session_state['player_id'] = player_id
+    if player_id not in st.session_state['player_data']:
+        st.session_state['player_data'][player_id] = {
+            "coins": 1000,
+            "diamonds": 50,
+            "games_played": 0,
+            "wins": 0
+        }
+    save_player_data()
 
-# Game screen
-def game_screen():
-    st.title("Carrom Pool Game")
-    if st.session_state['game_state']:
-        ui_elements.load_game_board(st.session_state['game_state'])
-        ui_elements.load_striker_controller()
-    if st.sidebar.button("Exit Game"):
-        st.session_state['screen'] = 'main_menu'
-        st.rerun()
+# Sidebar for player login
+with st.sidebar:
+    st.title("Carrom Pool Client")
+    player_id = st.text_input("Enter Player ID", value=st.session_state['player_id'] or "")
+    if st.button("Login"):
+        login(player_id)
 
-# Chat screen
-def chat_screen():
-    st.title("Chat")
-    ui_elements.load_chat_box()
-    if st.sidebar.button("Back to Menu"):
-        st.session_state['screen'] = 'main_menu'
-        st.rerun()
+# Load player data on start
+load_player_data()
 
-# Helper functions to change screens
-def start_game():
-    st.session_state['game_state'] = game_engine.start_game(st.session_state['player_id'])
-    websocket_handler.sync_game_state(st.session_state['game_state'])
-    st.session_state['screen'] = 'game'
-    st.rerun()
+# Main layout
+if st.session_state['player_id']:
+    player_id = st.session_state['player_id']
+    st.title(f"Welcome, Player {player_id}")
 
-def join_game():
-    st.session_state['game_state'] = game_engine.join_game(st.session_state['player_id'])
-    websocket_handler.sync_game_state(st.session_state['game_state'])
-    st.session_state['screen'] = 'game'
-    st.rerun()
+    player_data = st.session_state['player_data'][player_id]
 
-def go_to_chat():
-    st.session_state['screen'] = 'chat'
-    st.rerun()
+    # Display player data
+    st.json(player_data)
 
-# Main entry point for the app
-if __name__ == "__main__":
-    route()
+    # Buttons to add coins, diamonds, and wins
+    if st.button("Add 100 Coins"):
+        player_data["coins"] += 100
+        save_player_data()
+        st.experimental_rerun()
+
+    if st.button("Add 50 Diamonds"):
+        player_data["diamonds"] += 50
+        save_player_data()
+        st.experimental_rerun()
+
+    if st.button("Simulate 1 Win"):
+        player_data["games_played"] += 1
+        player_data["wins"] += 1
+        save_player_data()
+        st.experimental_rerun()
+
+else:
+    st.title("Please log in to continue")
