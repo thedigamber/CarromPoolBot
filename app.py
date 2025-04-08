@@ -1,80 +1,81 @@
 import streamlit as st
-import json
+import pyautogui
+import cv2
+import numpy as np
+import subprocess
 import os
+import time
+from PIL import Image
+from adb_shell.adb_device import AdbDeviceTcp
+from adb_shell.auth.sign_pythonrsa import PythonRSASigner
+import pytesseract
+
+# Install necessary packages
+os.system("pip install adb-shell pillow pyautogui opencv-python pytesseract")
 
 # Initialize session state
-if 'player_id' not in st.session_state:
-    st.session_state['player_id'] = None
-if 'player_data' not in st.session_state:
-    st.session_state['player_data'] = {}
+if 'bot_running' not in st.session_state:
+    st.session_state['bot_running'] = False
+if 'coins' not in st.session_state:
+    st.session_state['coins'] = 0
+if 'wins' not in st.session_state:
+    st.session_state['wins'] = 0
 
-# Load player data from JSON file
-def load_player_data():
-    try:
-        if os.path.exists('player_data.json'):
-            with open('player_data.json', 'r') as f:
-                st.session_state['player_data'] = json.load(f)
-        else:
-            st.session_state['player_data'] = {}
-    except json.JSONDecodeError:
-        st.session_state['player_data'] = {}
-        st.error("Failed to load player data. The data file is corrupted or empty. Initializing empty data.")
+# Function to connect to the emulator or device
+def connect_to_device():
+    device = AdbDeviceTcp('192.168.1.100', 5555)  # Replace with your device IP and port
+    with open('adbkey') as f:
+        priv = f.read()
+    with open('adbkey.pub') as f:
+        pub = f.read()
+    signer = PythonRSASigner(pub, priv)
+    device.connect(rsa_keys=[signer])
+    return device
 
-# Save player data to JSON file
-def save_player_data():
-    with open('player_data.json', 'w') as f:
-        json.dump(st.session_state['player_data'], f)
+# Function to capture screen content
+def capture_screen(device):
+    result = device.shell('screencap -p /sdcard/screen.png')
+    device.pull('/sdcard/screen.png', 'screen.png')
+    return Image.open('screen.png')
 
-# Function to handle login
-def login(player_id):
-    st.session_state['player_id'] = player_id
-    if player_id not in st.session_state['player_data']:
-        st.session_state['player_data'][player_id] = {
-            "coins": 1000,
-            "diamonds": 50,
-            "games_played": 0,
-            "wins": 0
-        }
-    save_player_data()
+# Function to detect game state using OCR
+def detect_game_state(image):
+    gray = cv2.cvtColor(np.array(image), cv2.COLOR_BGR2GRAY)
+    text = pytesseract.image_to_string(gray)
+    return text
 
-# Sidebar for player login
-with st.sidebar:
-    st.title("Carrom Pool Client")
-    player_id = st.text_input("Enter Player ID", value=st.session_state['player_id'] or "")
-    if st.button("Login"):
-        login(player_id)
+# Function to simulate touch input
+def simulate_touch(device, x, y):
+    device.shell(f'input tap {x} {y}')
 
-# Load player data on start
-load_player_data()
+# Autoplay logic
+def autoplay(device):
+    while st.session_state['bot_running']:
+        image = capture_screen(device)
+        game_state = detect_game_state(image)
+        # Analyze game state and decide actions
+        # Example: simulate a touch at a specific position
+        simulate_touch(device, 500, 500)
+        st.session_state['coins'] += 1
+        st.session_state['wins'] += 1
+        time.sleep(1)  # Adjust the delay as needed
 
-# Main layout
-if st.session_state['player_id']:
-    player_id = st.session_state['player_id']
-    st.title(f"Welcome, Player {player_id}")
+# Streamlit layout
+st.title("Carrom Pool Bot")
+st.write("Coins:", st.session_state['coins'])
+st.write("Wins:", st.session_state['wins'])
 
-    if player_id in st.session_state['player_data']:
-        player_data = st.session_state['player_data'][player_id]
+if st.button("Start Bot"):
+    st.session_state['bot_running'] = True
+    device = connect_to_device()
+    autoplay(device)
 
-        # Display player data
-        st.json(player_data)
+if st.button("Stop Bot"):
+    st.session_state['bot_running'] = False
 
-        # Buttons to add coins, diamonds, and wins
-        if st.button("Add 100 Coins"):
-            player_data["coins"] += 100
-            save_player_data()
-            st.rerun()
+# Log all actions and display live stats
+if st.session_state['bot_running']:
+    st.write("Bot is running...")
 
-        if st.button("Add 50 Diamonds"):
-            player_data["diamonds"] += 50
-            save_player_data()
-            st.rerun()
-
-        if st.button("Simulate 1 Win"):
-            player_data["games_played"] += 1
-            player_data["wins"] += 1
-            save_player_data()
-            st.rerun()
-    else:
-        st.error("Player data not found. Please log in again.")
 else:
-    st.title("Please log in to continue")
+    st.write("Bot is stopped.")
