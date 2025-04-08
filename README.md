@@ -1,2 +1,0 @@
-# CarromPoolBot
-heyy guys
