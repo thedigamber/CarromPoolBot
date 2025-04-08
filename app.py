@@ -52,27 +52,29 @@ if st.session_state['player_id']:
     player_id = st.session_state['player_id']
     st.title(f"Welcome, Player {player_id}")
 
-    player_data = st.session_state['player_data'][player_id]
+    if player_id in st.session_state['player_data']:
+        player_data = st.session_state['player_data'][player_id]
 
-    # Display player data
-    st.json(player_data)
+        # Display player data
+        st.json(player_data)
 
-    # Buttons to add coins, diamonds, and wins
-    if st.button("Add 100 Coins"):
-        player_data["coins"] += 100
-        save_player_data()
-        st.rerun()
+        # Buttons to add coins, diamonds, and wins
+        if st.button("Add 100 Coins"):
+            player_data["coins"] += 100
+            save_player_data()
+            st.rerun()
 
-    if st.button("Add 50 Diamonds"):
-        player_data["diamonds"] += 50
-        save_player_data()
-        st.rerun()
+        if st.button("Add 50 Diamonds"):
+            player_data["diamonds"] += 50
+            save_player_data()
+            st.rerun()
 
-    if st.button("Simulate 1 Win"):
-        player_data["games_played"] += 1
-        player_data["wins"] += 1
-        save_player_data()
-        st.rerun()
-
+        if st.button("Simulate 1 Win"):
+            player_data["games_played"] += 1
+            player_data["wins"] += 1
+            save_player_data()
+            st.rerun()
+    else:
+        st.error("Player data not found. Please log in again.")
 else:
     st.title("Please log in to continue")
