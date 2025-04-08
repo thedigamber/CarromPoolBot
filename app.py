@@ -35,9 +35,12 @@ def login_screen():
 # Main menu screen
 def main_menu_screen():
     st.title("Carrom Pool Game Controller")
-    st.sidebar.button("Start Game", on_click=start_game)
-    st.sidebar.button("Join Game", on_click=join_game)
-    st.sidebar.button("Chat", on_click=go_to_chat)
+    if st.sidebar.button("Start Game"):
+        start_game()
+    if st.sidebar.button("Join Game"):
+        join_game()
+    if st.sidebar.button("Chat"):
+        go_to_chat()
     if st.session_state['player_id']:
         st.sidebar.write(f"Logged in as: {st.session_state['player_id']}")
     # Display player info
