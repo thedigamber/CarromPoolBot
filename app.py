@@ -10,11 +10,15 @@ if 'player_data' not in st.session_state:
 
 # Load player data from JSON file
 def load_player_data():
-    if os.path.exists('player_data.json'):
-        with open('player_data.json', 'r') as f:
-            st.session_state['player_data'] = json.load(f)
-    else:
+    try:
+        if os.path.exists('player_data.json'):
+            with open('player_data.json', 'r') as f:
+                st.session_state['player_data'] = json.load(f)
+        else:
+            st.session_state['player_data'] = {}
+    except json.JSONDecodeError:
         st.session_state['player_data'] = {}
+        st.error("Failed to load player data. The data file is corrupted or empty. Initializing empty data.")
 
 # Save player data to JSON file
 def save_player_data():
