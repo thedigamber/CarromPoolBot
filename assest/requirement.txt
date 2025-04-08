@@ -1,1 +1,6 @@
 streamlit
+pyautogui
+opencv-python
+pillow
+adb-shell
+pytesseract
