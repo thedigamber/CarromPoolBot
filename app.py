@@ -1,17 +1,28 @@
 import streamlit as st
+import subprocess
+import sys
+import os
+import time
+
+# Function to install required packages
+def install_package(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+# Install necessary packages
+required_packages = ["pyautogui", "opencv-python", "pillow", "adb-shell", "pytesseract"]
+for package in required_packages:
+    try:
+        __import__(package)
+    except ImportError:
+        install_package(package)
+
 import pyautogui
 import cv2
 import numpy as np
-import subprocess
-import os
-import time
 from PIL import Image
 from adb_shell.adb_device import AdbDeviceTcp
 from adb_shell.auth.sign_pythonrsa import PythonRSASigner
 import pytesseract
-
-# Install necessary packages
-os.system("pip install adb-shell pillow pyautogui opencv-python pytesseract")
 
 # Initialize session state
 if 'bot_running' not in st.session_state:
