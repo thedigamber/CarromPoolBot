@@ -30,7 +30,7 @@ def login_screen():
     if st.sidebar.button("Login"):
         st.session_state['player_id'] = player_id
         st.session_state['screen'] = 'main_menu'
-        st.experimental_rerun()  # Rerun the script after updating session state
+        st.rerun()  # Rerun the script after updating session state
 
 # Main menu screen
 def main_menu_screen():
@@ -55,7 +55,7 @@ def game_screen():
         ui_elements.load_striker_controller()
     if st.sidebar.button("Exit Game"):
         st.session_state['screen'] = 'main_menu'
-        st.experimental_rerun()
+        st.rerun()
 
 # Chat screen
 def chat_screen():
@@ -63,24 +63,24 @@ def chat_screen():
     ui_elements.load_chat_box()
     if st.sidebar.button("Back to Menu"):
         st.session_state['screen'] = 'main_menu'
-        st.experimental_rerun()
+        st.rerun()
 
 # Helper functions to change screens
 def start_game():
     st.session_state['game_state'] = game_engine.start_game(st.session_state['player_id'])
     websocket_handler.sync_game_state(st.session_state['game_state'])
     st.session_state['screen'] = 'game'
-    st.experimental_rerun()
+    st.rerun()
 
 def join_game():
     st.session_state['game_state'] = game_engine.join_game(st.session_state['player_id'])
     websocket_handler.sync_game_state(st.session_state['game_state'])
     st.session_state['screen'] = 'game'
-    st.experimental_rerun()
+    st.rerun()
 
 def go_to_chat():
     st.session_state['screen'] = 'chat'
-    st.experimental_rerun()
+    st.rerun()
 
 # Main entry point for the app
 if __name__ == "__main__":
