@@ -57,18 +57,18 @@ if st.session_state['player_id']:
     if st.button("Add 100 Coins"):
         player_data["coins"] += 100
         save_player_data()
-        st.experimental_rerun()
+        st.rerun()
 
     if st.button("Add 50 Diamonds"):
         player_data["diamonds"] += 50
         save_player_data()
-        st.experimental_rerun()
+        st.rerun()
 
     if st.button("Simulate 1 Win"):
         player_data["games_played"] += 1
         player_data["wins"] += 1
         save_player_data()
-        st.experimental_rerun()
+        st.rerun()
 
 else:
     st.title("Please log in to continue")
